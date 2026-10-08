@@ -1,0 +1,87 @@
+# Stage1: scratch550k; cosine horizon is independent of stopping point.
+common:
+  action_dim: 14
+  state_dim: 16
+  action_chunk_size: 32
+  proprio_len: 1
+dataset:
+  dataset_dirs:
+  - data/arwam_release/robotwin/clean
+  - data/arwam_release/robotwin/random
+  camera_names:
+  - cam_head
+  image_size:
+  - 320
+  - 240
+  stable_after_seconds: 30
+  bbox_jitter:
+    enabled: true
+    probability: 0.8
+    scale_range:
+    - 0.95
+    - 1.2
+    center_shift_fraction: 0.05
+    min_iou: 0.65
+    max_attempts: 10
+model:
+  conditioning:
+    embedding_init_std: 2.0
+    state_dropout_prob: 0.3
+  vision_encoder:
+    checkpoint_path: weights/dinov3-vitl16-pretrain-lvd1689m
+    feat_layers:
+    - -12
+    - -8
+    - -4
+    concat:
+      out_dim: 1024
+  future_feat:
+    rla_tokens_per_frame: 32
+    rla_token_dim: 64
+    future_mask_bottleneck_dim: 64
+    checkpoint_step: 150000
+    rla_work_dir: runs/rla
+  mask_decoder:
+    hidden_dim: 256
+    num_layers: 4
+    num_heads: 8
+    num_channels: 6
+    channel_names:
+    - right_grasp
+    - right_carry
+    - right_place
+    - left_grasp
+    - left_carry
+    - left_place
+  action_expert:
+    depth: 12
+    hidden_size: 768
+    num_heads: 8
+training:
+  global_batch_size: 128
+  max_steps: 550000
+  output_dir: runs/stage1
+  latest_interval: 10000
+  log_interval: 10
+  save_interval: 50000
+  grad_clip_norm: 1.0
+  time_sampler: logit_normal
+  time_mu: 0.0
+  time_sigma: 1.0
+  learning_rate: 0.0002
+  lr_scheduler:
+    type: cosine
+    total_steps: 1564200
+    min_lr: 5.0e-05
+  betas:
+  - 0.9
+  - 0.99
+  weight_decay: 0.01
+  lambda_action: 1.0
+  lambda_mask: 0.13
+  lambda_rla: 0.0012
+  lambda_mask_token: 2.3
+  lambda_condition_decode: 2.0
+  lambda_run_endpoint_state: 0.005
+system:
+  num_workers: 2

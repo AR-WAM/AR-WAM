@@ -1,0 +1,58 @@
+# RoboTwin residual-latent autoencoder.
+vision_encoder:
+  checkpoint_path: weights/dinov3-vitl16-pretrain-lvd1689m
+models:
+  encoder:
+    name: SimpleTokenTransformer
+    args:
+      in_channels: 1024
+      model_channels: 1024
+      out_channels: 64
+      num_blocks: 12
+      num_heads: 16
+      mlp_ratio: 4.0
+      num_tokens: 32
+      norm_output_tokens: false
+  decoder:
+    name: SimpleTokenTransformer
+    args:
+      in_channels: 1024
+      model_channels: 1024
+      out_channels: 1024
+      token_channels: 64
+      num_blocks: 12
+      num_heads: 16
+      mlp_ratio: 4.0
+      num_tokens: 32
+      zero_init: true
+dataset:
+  dataset_dirs:
+  - data/arwam_release/robotwin/clean
+  - data/arwam_release/robotwin/random
+  camera_names:
+  - cam_head
+  image_size:
+  - 320
+  - 240
+  stable_after_seconds: 30
+  horizon:
+  - 2
+  - 45
+  samples_per_epoch: 1000000
+  seed: 2026
+training:
+  global_batch_size: 128
+  max_steps: 150000
+  learning_rate: 0.0001
+  weight_decay: 0.0
+  betas:
+  - 0.9
+  - 0.999
+  eps: 1.0e-08
+  lambda_l1: 1.0
+  lambda_mse: 1.0
+  mixed_precision: bfloat16
+  log_interval: 50
+  save_interval: 10000
+system:
+  num_workers: 5
